@@ -28,9 +28,12 @@ export const calculateSprinklerSystem = (inputs) => {
     mainHeadLoss;
 
   // Pump Power Calculation (HP)
-  // Power (HP) = (Flow LPS * Total Head m) / (612 * Efficiency)
-  const pumpEfficiency = inputs.pumpEfficiency || 0.75;
-  const pumpPowerHP = (systemFlowLPS * totalDynamicHead) / (612 * pumpEfficiency);
+  // From Excel (14.17.xlsx): Pump Efficiency 65% & Motor Efficiency 70%
+  // Motor Power (HP) = (Flow LPS * TDH) / (75 * Pump_Eff * Motor_Eff)
+  const pumpEfficiency = 0.65;
+  const motorEfficiency = 0.70;
+  const combinedEfficiency = pumpEfficiency * motorEfficiency; // 0.455
+  const pumpPowerHP = (systemFlowLPS * totalDynamicHead) / (75 * combinedEfficiency);
 
   // Operating time
   const operatingTimeHrs = inputs.operatingHours;
@@ -82,105 +85,110 @@ const generateSprinklerBOQ = (
 ) => {
   const boq = [];
 
-  // PUMP & MOTOR
+  // HEAD UNIT (from Excel: BOQ Rain Gun.xlsx)
   boq.push({
-    category: 'PUMP & MOTOR',
-    item: 'Motor',
-    specs: `${pumpPowerHP.toFixed(1)} HP`,
+    category: 'HEAD UNIT',
+    item: 'Motor with frame & Electric pannel',
+    specs: '24 HP',
     quantity: 1,
-    unitPrice: 25000 * pumpPowerHP,
-    totalCost: 25000 * pumpPowerHP,
-    unit: 'No'
+    unitPrice: 97000,
+    totalCost: 97000,
+    unit: 'Nos'
   });
 
-  boq.push({
-    category: 'PUMP & MOTOR',
-    item: 'Pump',
-    specs: `${systemFlowLPS.toFixed(1)} LPS @ ${totalHead.toFixed(1)}m`,
-    quantity: 1,
-    unitPrice: 50000,
-    totalCost: 50000,
-    unit: 'No'
-  });
-
-  // MAIN LINE & DISTRIBUTION
-  const mainPipeLength = inputs.mainPipeLength || areaM2 / 800;
-  const mainPipeDiameter = inputs.mainPipeDiameter || 107.5;
+  // PIPE NETWORK
+  const mainPipeLength = inputs.mainPipeLength || 1040; // Default from Excel
+  const subPipeLength = inputs.subPipeLength || 17; // Default from Excel
 
   boq.push({
-    category: 'MAIN LINE & DISTRIBUTION',
-    item: `PVC Main Pipe ${mainPipeDiameter}mm`,
-    specs: 'Class A',
+    category: 'PIPE NETWORK',
+    item: 'PVC Pipe (ROBIN)',
+    specs: '4" (6 Bars)',
     quantity: mainPipeLength,
-    unitPrice: 200,
-    totalCost: mainPipeLength * 200,
+    unitPrice: 300,
+    totalCost: mainPipeLength * 300,
     unit: 'm'
   });
 
-  // SPRINKLER HEADS
-  const numberOfSprinklers = inputs.sprinklersPerZone * inputs.numberOfZones || areaM2 / 100;
-
   boq.push({
-    category: 'SPRINKLER HEADS',
-    item: 'Impact Sprinklers',
-    specs: inputs.sprinklerFlow || '2.5 m³/h',
-    quantity: numberOfSprinklers,
-    unitPrice: 3000,
-    totalCost: numberOfSprinklers * 3000,
-    unit: 'No'
-  });
-
-  // RISERS & HYDRANTS
-  boq.push({
-    category: 'RISERS & HYDRANTS',
-    item: 'GI Risers',
-    specs: '50mm x 1m',
-    quantity: numberOfSprinklers,
-    unitPrice: 500,
-    totalCost: numberOfSprinklers * 500,
-    unit: 'No'
+    category: 'PIPE NETWORK',
+    item: 'PVC TEE (Atlas/Maat)',
+    specs: '4"',
+    quantity: 21,
+    unitPrice: 580,
+    totalCost: 12180,
+    unit: 'Nos'
   });
 
   boq.push({
-    category: 'RISERS & HYDRANTS',
-    item: 'Field Hydrants',
-    specs: 'Standard',
-    quantity: Math.ceil(areaM2 / 5000),
-    unitPrice: 2000,
-    totalCost: Math.ceil(areaM2 / 5000) * 2000,
-    unit: 'No'
-  });
-
-  // FITTINGS & ACCESSORIES
-  boq.push({
-    category: 'FITTINGS & ACCESSORIES',
-    item: 'Gate Valves',
-    specs: '50mm',
-    quantity: 2,
-    unitPrice: 5000,
-    totalCost: 10000,
-    unit: 'No'
+    category: 'PIPE NETWORK',
+    item: 'PVC ELBOW (Atlas/Maat)',
+    specs: '4"',
+    quantity: 11,
+    unitPrice: 550,
+    totalCost: 6050,
+    unit: 'Nos'
   });
 
   boq.push({
-    category: 'FITTINGS & ACCESSORIES',
-    item: 'Pressure Gauge',
-    specs: '0-10 Bar',
-    quantity: 2,
-    unitPrice: 2000,
+    category: 'PIPE NETWORK',
+    item: 'PVC Reducer Bush (Atlas/Maat)',
+    specs: '4" X 3"',
+    quantity: 20,
+    unitPrice: 200,
     totalCost: 4000,
-    unit: 'No'
+    unit: 'Nos'
   });
 
-  // INSTALLATION & LABOR
   boq.push({
-    category: 'INSTALLATION & LABOR',
-    item: 'Installation',
-    specs: 'Labour',
-    quantity: areaM2,
-    unitPrice: 10,
-    totalCost: areaM2 * 10,
-    unit: 'm²'
+    category: 'PIPE NETWORK',
+    item: 'PVC Ball Valve (Atlas/Maat)',
+    specs: '4"',
+    quantity: 3,
+    unitPrice: 3800,
+    totalCost: 11400,
+    unit: 'Nos'
+  });
+
+  boq.push({
+    category: 'PIPE NETWORK',
+    item: 'PVC Solution (OSKAR)',
+    specs: '1 Kg',
+    quantity: 8,
+    unitPrice: 600,
+    totalCost: 4800,
+    unit: 'Nos'
+  });
+
+  // RAIN GUN SYSTEM
+  boq.push({
+    category: 'RAIN GUN SYSTEM',
+    item: 'Gate Valve (Anwar Metal)',
+    specs: '3"',
+    quantity: 20,
+    unitPrice: 3650,
+    totalCost: 73000,
+    unit: 'Nos'
+  });
+
+  boq.push({
+    category: 'RAIN GUN SYSTEM',
+    item: 'GI Pipe',
+    specs: '3" (6m Length)',
+    quantity: 5,
+    unitPrice: 3500,
+    totalCost: 17500,
+    unit: 'Nos'
+  });
+
+  boq.push({
+    category: 'RAIN GUN SYSTEM',
+    item: 'PVC Pipe (ROBIN)',
+    specs: '3" (12 Bars)',
+    quantity: subPipeLength,
+    unitPrice: 280,
+    totalCost: subPipeLength * 280,
+    unit: 'm'
   });
 
   return boq;

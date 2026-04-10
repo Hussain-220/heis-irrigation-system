@@ -53,9 +53,11 @@ export const calculateDripSystem = (inputs) => {
     mainHeadLoss;
 
   // Pump Power Calculation (HP)
-  // Power (HP) = (Flow LPS * Total Head m) / (612 * Efficiency)
-  const pumpEfficiency = inputs.pumpEfficiency || 0.75;
-  const pumpPowerHP = (systemFlowLPS * totalDynamicHead) / (612 * pumpEfficiency);
+  // Pump Water Power (HP) = (Flow LPS * Total Head m) / 75
+  // Motor Power (HP) = Pump Water Power / (0.7 * 0.7) = Pump Water Power / 0.49
+  const pumpWaterPowerHP = (systemFlowLPS * totalDynamicHead) / 75;
+  const pumpMotorEfficiency = 0.7 * 0.7; // Combined efficiency = 0.49
+  const pumpPowerHP = pumpWaterPowerHP / pumpMotorEfficiency;
 
   // Operating time
   const operatingTimeHrs = inputs.operatingHours;
@@ -101,125 +103,215 @@ const calculateHazenWilliamsHeadLoss = (flowM3s, C, length, diameterMm, F) => {
 const generateDripBOQ = (inputs, areaM2, systemFlowLPS, pumpPowerHP, totalHead) => {
   const boq = [];
 
-  // HEAD CONTROL UNIT
+  // HEAD CONTROL UNIT (from Excel: Drip Irrigation BOQ for Orchard.xlsx)
   boq.push({
     category: 'HEAD CONTROL UNIT',
-    item: 'Motor',
-    specs: `${pumpPowerHP.toFixed(1)} HP`,
+    item: 'Motor & Centrifugal Pump 7.5 HP',
+    specs: 'With frame & Electric panel',
     quantity: 1,
-    unitPrice: 25000 * pumpPowerHP,
-    totalCost: 25000 * pumpPowerHP,
-    unit: 'No'
+    unitPrice: 145000,
+    totalCost: 145000,
+    unit: 'Nos'
   });
 
   boq.push({
     category: 'HEAD CONTROL UNIT',
-    item: 'Hydrocyclone/Sand Separator',
-    specs: `${systemFlowLPS.toFixed(1)} LPS`,
+    item: 'Hydrocyclone / Sand Separator',
+    specs: '3" Inlet/Outlet (Metal)',
     quantity: 1,
-    unitPrice: 15000,
-    totalCost: 15000,
-    unit: 'No'
+    unitPrice: 45000,
+    totalCost: 45000,
+    unit: 'Nos'
   });
 
   boq.push({
     category: 'HEAD CONTROL UNIT',
-    item: 'Disc Filter',
-    specs: `${systemFlowLPS.toFixed(1)} LPS`,
+    item: 'Screen / Disc Filter',
+    specs: '3" (120 Mesh capacity)',
     quantity: 1,
-    unitPrice: 20000,
-    totalCost: 20000,
-    unit: 'No'
+    unitPrice: 25000,
+    totalCost: 25000,
+    unit: 'Nos'
   });
 
   boq.push({
     category: 'HEAD CONTROL UNIT',
-    item: 'Venturi Injector',
-    specs: 'Standard',
+    item: 'Venturi Fertilizer Injector',
+    specs: '2" Assembly with suction hose',
     quantity: 1,
-    unitPrice: 5000,
-    totalCost: 5000,
-    unit: 'No'
+    unitPrice: 18500,
+    totalCost: 18500,
+    unit: 'Nos'
   });
 
   boq.push({
     category: 'HEAD CONTROL UNIT',
-    item: 'Pressure Gauge',
-    specs: '0-10 Bar',
+    item: 'Pressure Gauges',
+    specs: '0-6 Bar (Glycerin filled)',
+    quantity: 3,
+    unitPrice: 1500,
+    totalCost: 4500,
+    unit: 'Nos'
+  });
+
+  boq.push({
+    category: 'HEAD CONTROL UNIT',
+    item: 'Air Release Valve',
+    specs: '2" (Kinetic)',
     quantity: 2,
-    unitPrice: 2000,
-    totalCost: 4000,
-    unit: 'No'
+    unitPrice: 4000,
+    totalCost: 8000,
+    unit: 'Nos'
   });
 
   // MAIN & SUBMAIN NETWORK
-  const mainPipeLength = inputs.mainPipeLength || areaM2 / 1000;
-  const mainPipeDiameter = inputs.mainPipeDiameter || 50;
+  const mainPipeLength = inputs.mainPipeLength || 180; // Default from Excel
+  const subMainPipeLength = inputs.subMainPipeLength || 230; // Default from Excel
 
   boq.push({
     category: 'MAIN & SUBMAIN NETWORK',
-    item: 'PVC Main Pipe',
-    specs: `${mainPipeDiameter}mm`,
+    item: 'PVC Pipe (Main Line)',
+    specs: '4" (6 Bars) - Class D',
     quantity: mainPipeLength,
-    unitPrice: 100,
-    totalCost: mainPipeLength * 100,
+    unitPrice: 300,
+    totalCost: mainPipeLength * 300,
     unit: 'm'
+  });
+
+  boq.push({
+    category: 'MAIN & SUBMAIN NETWORK',
+    item: 'PVC Pipe (Submain Line)',
+    specs: '3" (6 Bars) - Class D',
+    quantity: subMainPipeLength,
+    unitPrice: 280,
+    totalCost: subMainPipeLength * 280,
+    unit: 'm'
+  });
+
+  boq.push({
+    category: 'MAIN & SUBMAIN NETWORK',
+    item: 'Gate Valve / Control Valve',
+    specs: '3"',
+    quantity: 4,
+    unitPrice: 3650,
+    totalCost: 14600,
+    unit: 'Nos'
+  });
+
+  boq.push({
+    category: 'MAIN & SUBMAIN NETWORK',
+    item: 'PVC TEE',
+    specs: '4" and 3" Assorted',
+    quantity: 15,
+    unitPrice: 580,
+    totalCost: 8700,
+    unit: 'Nos'
+  });
+
+  boq.push({
+    category: 'MAIN & SUBMAIN NETWORK',
+    item: 'PVC ELBOW',
+    specs: '4" and 3" Assorted',
+    quantity: 12,
+    unitPrice: 550,
+    totalCost: 6600,
+    unit: 'Nos'
+  });
+
+  boq.push({
+    category: 'MAIN & SUBMAIN NETWORK',
+    item: 'PVC Reducer Bush',
+    specs: '4" X 3"',
+    quantity: 8,
+    unitPrice: 200,
+    totalCost: 1600,
+    unit: 'Nos'
+  });
+
+  boq.push({
+    category: 'MAIN & SUBMAIN NETWORK',
+    item: 'PVC Solution / Solvent',
+    specs: '1Kg',
+    quantity: 5,
+    unitPrice: 600,
+    totalCost: 3000,
+    unit: 'Nos'
   });
 
   // DRIP LATERALS & EMITTERS
-  const lateralLength = inputs.lateralLength || areaM2 / 100;
+  const lateralLength = inputs.lateralLength || 10500; // Default from Excel
+  const numberOfDrippers = inputs.numberOfDrippers || 10500; // Default from Excel
+  const numberOfTakeoffs = inputs.numberOfTakeoffs || 105; // Default from Excel
 
   boq.push({
     category: 'DRIP LATERALS & EMITTERS',
-    item: '16mm PE Blank Tube',
-    specs: 'Standard',
+    item: 'PE Blank Tube (Laterals)',
+    specs: '16mm (Low Density Polyethylene)',
     quantity: lateralLength,
-    unitPrice: 15,
-    totalCost: lateralLength * 15,
+    unitPrice: 45,
+    totalCost: lateralLength * 45,
     unit: 'm'
   });
 
-  const numberOfDrippers = inputs.plantsPerAcre * inputs.acres || areaM2 / 2;
-
   boq.push({
     category: 'DRIP LATERALS & EMITTERS',
-    item: 'PC Drippers',
-    specs: inputs.dripperFlow || '4 LPH',
+    item: 'Online PC Drippers/Emitters',
+    specs: '4 LPH (Pressure Compensating)',
     quantity: numberOfDrippers,
-    unitPrice: 10,
-    totalCost: numberOfDrippers * 10,
-    unit: 'No'
+    unitPrice: 12,
+    totalCost: numberOfDrippers * 12,
+    unit: 'Nos'
   });
 
   boq.push({
     category: 'DRIP LATERALS & EMITTERS',
-    item: 'Take-offs/Grommets',
-    specs: 'Standard',
-    quantity: numberOfDrippers,
-    unitPrice: 5,
-    totalCost: numberOfDrippers * 5,
-    unit: 'No'
+    item: 'Take-off / Grommet',
+    specs: '16mm to 3" connection',
+    quantity: numberOfTakeoffs,
+    unitPrice: 25,
+    totalCost: numberOfTakeoffs * 25,
+    unit: 'Nos'
+  });
+
+  boq.push({
+    category: 'DRIP LATERALS & EMITTERS',
+    item: 'End Caps (Flush Valves)',
+    specs: '16mm',
+    quantity: numberOfTakeoffs,
+    unitPrice: 15,
+    totalCost: numberOfTakeoffs * 15,
+    unit: 'Nos'
   });
 
   // INSTALLATION & SERVICES
   boq.push({
     category: 'INSTALLATION & SERVICES',
-    item: 'Trenching',
-    specs: 'Labour',
-    quantity: lateralLength,
-    unitPrice: 20,
-    totalCost: lateralLength * 20,
-    unit: 'm'
+    item: 'Trenching & Backfilling',
+    specs: 'Tractor / Manual Labor',
+    quantity: 1,
+    unitPrice: 45000,
+    totalCost: 45000,
+    unit: 'Lum Sum'
   });
 
   boq.push({
     category: 'INSTALLATION & SERVICES',
-    item: 'Installation',
-    specs: 'Labour',
-    quantity: areaM2,
-    unitPrice: 5,
-    totalCost: areaM2 * 5,
-    unit: 'm²'
+    item: 'Transportation Charges',
+    specs: 'Site Delivery',
+    quantity: 1,
+    unitPrice: 25000,
+    totalCost: 25000,
+    unit: 'Lum Sum'
+  });
+
+  boq.push({
+    category: 'INSTALLATION & SERVICES',
+    item: 'Installation Services',
+    specs: 'Expert Fitting & Testing',
+    quantity: 1,
+    unitPrice: 60000,
+    totalCost: 60000,
+    unit: 'Lum Sum'
   });
 
   return boq;

@@ -36,11 +36,14 @@ function Dashboard({ systemType, onBack }) {
         dripperOperatingPressure: 2,
         lateralLength: 500,
         lateralDiameter: 16,
-        mainPipeLength: 100,
+        mainPipeLength: 180,
+        subMainPipeLength: 230,
         mainPipeDiameter: 50,
         drippersPerLateral: 50,
         dripperFlow: '4 LPH',
         hazenWilliamsC: 150,
+        numberOfDrippers: 10500,
+        numberOfTakeoffs: 105,
       };
     } else {
       return {
@@ -49,7 +52,8 @@ function Dashboard({ systemType, onBack }) {
         sprinklersPerZone: 10,
         sprinklerFlowLPH: 2500,
         sprinklerOperatingPressure: 3,
-        mainPipeLength: 200,
+        mainPipeLength: 1040,
+        subPipeLength: 17,
         mainPipeDiameter: 107.5,
         numberOfZones: 2,
         sprinklerFlow: '2.5 m³/h',
