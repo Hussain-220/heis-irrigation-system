@@ -74,15 +74,11 @@ function Dashboard({ systemType, onBack }) {
     setLoading(true);
     setError(null);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const endpoint = systemType === 'drip'
-        ? `${apiUrl}/api/calculate/drip`
-        : `${apiUrl}/api/calculate/sprinkler`;
-
+      const endpoint = systemType === 'drip' ? '/api/drip' : '/api/sprinkler';
       const response = await axios.post(endpoint, formData);
       setResults(response.data.data);
     } catch (err) {
-      setError('Failed to calculate. Make sure the backend is running.');
+      setError('Failed to calculate. Please try again.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -94,12 +90,9 @@ function Dashboard({ systemType, onBack }) {
     setError(null);
     setLoading(true);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const response = await axios.post(
-        `${apiUrl}/api/generate-pdf`,
-        results,
-        { responseType: 'blob' }
-      );
+      const response = await axios.post('/api/pdf', results, {
+        responseType: 'blob'
+      });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
